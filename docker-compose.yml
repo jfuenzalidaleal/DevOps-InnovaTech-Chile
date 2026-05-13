@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Base de Datos MySQL (Requisito IE3 - Persistencia)
+  db-datos:
+    image: mysql:8.0
+    container_name: db_innovatech
+    environment:
+      - MYSQL_DATABASE=innovatech_db
+      - MYSQL_ROOT_PASSWORD=root_password # Cambia esto por algo seguro
+      - MYSQL_USER=user_devops
+      - MYSQL_PASSWORD=pass_devops
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql # Persistencia para MySQL
+    networks:
+      - red_interna
+
+  # Microservicio Ventas
+  back-ventas:
+    build: ./back-ventas
+    container_name: micro-ventas
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-datos:3306/innovatech_db
+      - SPRING_DATASOURCE_USERNAME=user_devops
+      - SPRING_DATASOURCE_PASSWORD=pass_devops
+    depends_on:
+      - db-datos
+    networks:
+      - red_interna
+
+  # Microservicio Despachos
+  back-despachos:
+    build: ./back-despachos
+    container_name: micro-despachos
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-datos:3306/innovatech_db
+      - SPRING_DATASOURCE_USERNAME=user_devops
+      - SPRING_DATASOURCE_PASSWORD=pass_devops
+    depends_on:
+      - db-datos
+    networks:
+      - red_interna
+
+  # Frontend Web
+  frontend:
+    build: ./front-web
+    container_name: front_innovatech
+    ports:
+      - "80:80"
+    networks:
+      - red_interna
+
+networks:
+  red_interna:
+    driver: bridge
+
+volumes:
+  mysql_data:
