@@ -1,26 +1,25 @@
-version: '3.8'
-
 services:
-  # Base de Datos MySQL (Requisito IE3 - Persistencia)
+  # Nombre del servicio: db-datos (todo minúsculas)
   db-datos:
     image: mysql:8.0
     container_name: db_innovatech
     environment:
       - MYSQL_DATABASE=innovatech_db
-      - MYSQL_ROOT_PASSWORD=root_password # Cambia esto por algo seguro
+      - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_USER=user_devops
       - MYSQL_PASSWORD=pass_devops
-    ports:
-      - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql # Persistencia para MySQL
+      - mysql_data:/var/lib/mysql
     networks:
       - red_interna
 
-  # Microservicio Ventas
+  # Nombre del servicio: back-ventas (todo minúsculas)
   back-ventas:
-    build: ./back-ventas
+    build:
+      context: "./back-Ventas_SpringBoot/Springboot-API-REST"
+      dockerfile: Dockerfile # Le decimos explícitamente cómo se llama
     container_name: micro-ventas
+
     ports:
       - "8080:8080"
     environment:
@@ -32,9 +31,11 @@ services:
     networks:
       - red_interna
 
-  # Microservicio Despachos
+  # Nombre del servicio: back-despachos (todo minúsculas - AQUÍ ESTABA EL ERROR)
   back-despachos:
-    build: ./back-despachos
+    build:
+      context: "./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO"
+      dockerfile: Dockerfile # Le decimos explícitamente cómo se llama
     container_name: micro-despachos
     ports:
       - "8081:8081"
@@ -47,9 +48,11 @@ services:
     networks:
       - red_interna
 
-  # Frontend Web
+  # Nombre del servicio: frontend (todo minúsculas)
   frontend:
-    build: ./front-web
+    build:
+      context: "./front_despacho"
+      dockerfile: Dockerfile # Le decimos explícitamente cómo se llama
     container_name: front_innovatech
     ports:
       - "80:80"

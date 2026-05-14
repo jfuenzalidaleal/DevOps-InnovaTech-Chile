@@ -1,15 +1,21 @@
-# Etapa 1: Build de la aplicación
-FROM node:20-alpine AS build-stage
+# ETAPA 1: Construcción del Front (Vite)
+FROM node:20-alpine AS build
 WORKDIR /app
+
+# Copiar archivos de dependencias
 COPY package*.json ./
 RUN npm install
+
+# Copiar el resto del código y generar la versión de producción
 COPY . .
 RUN npm run build
 
-# Etapa 2: Servidor de producción (Nginx)
+# ETAPA 2: Servidor Web Nginx
 FROM nginx:stable-alpine
-# Copiamos los archivos compilados al directorio de Nginx
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-# Copiamos una configuración personalizada si fuera necesario
+
+# CAMBIO AQUÍ: Vite genera la carpeta "dist", no "build"
+COPY --from=build /app/dist /usr/share/nginx/html
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
