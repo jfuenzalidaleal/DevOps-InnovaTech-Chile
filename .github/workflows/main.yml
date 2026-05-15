@@ -1,8 +1,8 @@
-name: CI/CD Innovatech Pipeline
+name: Deploy Frontend to AWS
 
 on:
   push:
-    branches: [ "main", "deploy" ] # Se activa al subir a estas ramas
+    branches: [ main ] # Se activa al subir cambios a la rama main
 
 jobs:
   build-and-push:
@@ -17,19 +17,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Construcción de imágenes usando tus carpetas reales
-      - name: Build Back-Ventas
+      - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/back-ventas:latest ./back-Ventas_SpringBoot/Springboot-API-REST
-          docker push ${{ secrets.DOCKER_USERNAME }}/back-ventas:latest
-
-      - name: Build Back-Despachos
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/back-despachos:latest ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
-          docker push ${{ secrets.DOCKER_USERNAME }}/back-despachos:latest
-
-      - name: Build Frontend
-        run: |
+          # Construimos la imagen apuntando a la carpeta del frontend
           docker build -t ${{ secrets.DOCKER_USERNAME }}/front-web:latest ./front_despacho
           docker push ${{ secrets.DOCKER_USERNAME }}/front-web:latest
 
@@ -37,15 +27,24 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Desplegar en AWS vía SSH
+      - name: Ejecutar comandos en AWS vía SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.AWS_SSH_KEY }}
+          host: ${{ secrets.AWS_FRONTEND_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
-            cd ~/proyecto-innovatech || mkdir ~/proyecto-innovatech && cd ~/proyecto-innovatech
-            # Aquí necesitarás tener tu docker-compose.yml en la EC2
-            docker-compose pull
-            docker-compose up -d
-            docker image prune -f
+            # 1. Autenticarse en Docker (opcional si la imagen es pública, pero recomendado)
+            # 2. Bajar la última versión de la imagen
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/front-web:latest
+            
+            # 3. Detener el contenedor actual si existe
+            sudo docker stop front_innovatech || true
+            sudo docker rm -f front_innovatech || true
+            
+            # 4. Correr el nuevo contenedor
+            sudo docker run -d --name front_innovatech -p 80:80 ${{ secrets.DOCKER_USERNAME }}/front-web:latest
+            
+            # 5. Limpiar imágenes antiguas para no llenar el disco de la EC2
+            sudo docker image prune -f
