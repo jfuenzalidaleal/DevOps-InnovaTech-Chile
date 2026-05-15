@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://qic534o8o0.execute-api.us-east-1.amazonaws.com',
+        // AQUÍ PONES LA IP PÚBLICA DE TU INSTANCIA DE BACKEND
+        target: 'http://3.87.210.251:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
